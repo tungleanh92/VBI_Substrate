@@ -43,6 +43,12 @@ pub use sp_runtime::{Perbill, Permill};
 /// Import the template pallet.
 pub use pallet_template;
 
+pub use pallet_kitties;
+
+pub use pallet_loosely_coupling;
+
+pub use pallet_tightly_coupling;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -271,6 +277,26 @@ impl pallet_template::Config for Runtime {
 	type Event = Event;
 }
 
+parameter_types! {
+	pub const MaxKittyOwned: u32 = 9999;
+}
+
+impl pallet_kitties::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type KittyRandomness = RandomnessCollectiveFlip;
+	type MaxKittiesOwned = MaxKittyOwned;
+}
+
+impl pallet_tightly_coupling::Config for Runtime {
+	type Event = Event;
+}
+
+impl pallet_loosely_coupling::Config for Runtime {
+	type Event = Event;
+	type InputValue = Kitties;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -288,6 +314,9 @@ construct_runtime!(
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template,
+		Kitties: pallet_kitties,
+		TightlyCoupling: pallet_tightly_coupling,
+		LooselyCoupling: pallet_loosely_coupling,
 	}
 );
 
