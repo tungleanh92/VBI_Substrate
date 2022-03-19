@@ -2,6 +2,15 @@
 
 pub use pallet::*;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
@@ -21,7 +30,7 @@ pub mod pallet {
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	// Struct for holding kitty information
-	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
+	#[derive(Clone, Encode, Decode, PartialEq, TypeInfo)]
 	#[scale_info(skip_type_params(T))]
 	pub struct Kitty<T: Config> {
 		// Using 16 bytes to represent a kitty DNA
@@ -33,11 +42,11 @@ pub mod pallet {
 		pub date_created: T::Moment
 	}
 
-	impl<T: Config> MaxEncodedLen for Kitty<T> {
-        fn max_encoded_len() -> usize {
-            T::AccountId::max_encoded_len() * 2
-        }
-    }
+	impl<T: Config> sp_std::fmt::Display for Kitty<T> {
+		fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
+			write!(f, "({:?}, {:?}, {:?}, {:?}, {:?})", self.dna, self.price, self.gender, self.owner, self.date_created)
+		}
+	}
 
 	// Set Gender type in kitty struct
 	#[derive(Clone, Encode, Decode, PartialEq, Copy, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -50,6 +59,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
@@ -106,14 +116,17 @@ pub mod pallet {
 
 	/// Keeps track of the number of kitties in existence.
 	#[pallet::storage]
+	#[pallet::getter(fn count_kitties)]
 	pub(super) type CountForKitties<T: Config> = StorageValue<_, u64, ValueQuery>;
 
 	/// Maps the kitty struct to the kitty DNA.
 	#[pallet::storage]
+	#[pallet::getter(fn kitties)]
 	pub(super) type Kitties<T: Config> = StorageMap<_, Twox64Concat, [u8; 16], Kitty<T>>;
 
 	/// Track the kitties owned by each account.
 	#[pallet::storage]
+	#[pallet::getter(fn kitties_owned)]
 	pub(super) type KittiesOwned<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -127,19 +140,19 @@ pub mod pallet {
 		/// Create a new unique kitty.
 		///
 		/// The actual kitty creation is done in the `mint()` function.
-		// #[pallet::weight(0)]
-		// pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
-		// 	// Make sure the caller is from a signed origin
-		// 	let sender = ensure_signed(origin)?;
+		#[pallet::weight(0)]
+		pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
+			// Make sure the caller is from a signed origin
+			let sender = ensure_signed(origin)?;
 
-		// 	// Generate unique DNA and Gender using a helper function
-		// 	let (kitty_gen_dna, gender) = Self::gen_dna();
+			// Generate unique DNA and Gender using a helper function
+			let (kitty_gen_dna, gender) = Self::gen_dna();
 
-		// 	// Write new kitty to storage by calling helper function
-		// 	Self::mint(&sender, kitty_gen_dna, gender)?;
+			// Write new kitty to storage by calling helper function
+			Self::mint(&sender, kitty_gen_dna, gender)?;
 
-		// 	Ok(())
-		// }
+			Ok(())
+		}
 
 		/// Breed a kitty.
 		///
@@ -162,11 +175,10 @@ pub mod pallet {
 			ensure!(maybe_dad.owner == sender, Error::<T>::NotOwner);
 
 			// Parents must be of opposite genders
-			ensure!(maybe_mom.gender != maybe_dad.gender, Error::<T>::CantBreed);
+			ensure!(maybe_mom.gender == maybe_dad.gender, Error::<T>::CantBreed);
 
 			// Create new DNA from these parents
 			let (new_dna, new_gender) = Self::breed_dna(&parent_1, &parent_2);
-
 			// Mint new kitty
 			Self::mint(&sender, new_dna, new_gender)?;
 			Ok(())
@@ -200,12 +212,12 @@ pub mod pallet {
 		pub fn buy_kitty(
 			origin: OriginFor<T>,
 			kitty_id: [u8; 16],
-			bid_price: BalanceOf<T>,
+			bid_price: Option<BalanceOf<T>>,
 		) -> DispatchResult {
 			// Make sure the caller is from a signed origin
 			let buyer = ensure_signed(origin)?;
 			// Transfer the kitty from seller to buyer as a sale.
-			Self::do_transfer(kitty_id, buyer, Some(bid_price))?;
+			Self::do_transfer(kitty_id, buyer, bid_price)?;
 
 			Ok(())
 		}
@@ -265,6 +277,21 @@ pub mod pallet {
 			}
 		}
 
+		pub fn generate_kitty(origin: OriginFor<T>) -> Kitty<T> {
+			// Make sure the caller is from a signed origin
+			let sender = ensure_signed(origin).unwrap();
+
+			// Generate unique DNA and Gender using a helper function
+			let (kitty_gen_dna, gender) = Self::gen_dna();
+
+			// Write new kitty to storage by calling helper function
+			Self::mint(&sender, kitty_gen_dna, gender);
+		
+			let kitty = Kitties::<T>::get(&kitty_gen_dna).ok_or(Error::<T>::NoKitty).unwrap();
+
+			kitty
+		}
+
 		// Picks from existing DNA
 		fn mutate_dna_fragment(dna_fragment1: u8, dna_fragment2: u8, random_value: u8) -> u8 {
 			if random_value % 2 == 0 {
@@ -294,7 +321,7 @@ pub mod pallet {
 		) -> Result<[u8; 16], DispatchError> {
 			// Create a new object
 			let kitty = Kitty::<T> { dna, price: None, gender, owner: owner.clone(), date_created: pallet_timestamp::Pallet::<T>::now() };
-
+			
 			// Check if the kitty does not already exist in our storage map
 			ensure!(!Kitties::<T>::contains_key(&kitty.dna), Error::<T>::DuplicateKitty);
 
@@ -372,6 +399,16 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		// pub fn gen_kitty() -> Kitty<T> {
+		// 	Kitty {
+		// 		dna: [0; 16],
+		// 		price: None,
+		// 		gender: Gender::Male,
+		// 		owner: ,
+		// 		date_created: pallet_timestamp::Pallet::<T>::now(),
+		// 	}
+		// }
 	}
 }
 
