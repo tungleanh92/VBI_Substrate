@@ -161,7 +161,7 @@ pub mod pallet {
 		/// Breed a kitty.
 		///
 		/// Breed two kitties to give birth to a new kitty.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::breed_kitty())]
 		pub fn breed_kitty(
 			origin: OriginFor<T>,
 			parent_1: [u8; 16],
@@ -179,7 +179,7 @@ pub mod pallet {
 			ensure!(maybe_dad.owner == sender, Error::<T>::NotOwner);
 
 			// Parents must be of opposite genders
-			ensure!(maybe_mom.gender == maybe_dad.gender, Error::<T>::CantBreed);
+			ensure!(maybe_mom.gender != maybe_dad.gender, Error::<T>::CantBreed);
 
 			// Create new DNA from these parents
 			let (new_dna, new_gender) = Self::breed_dna(&parent_1, &parent_2);
@@ -279,21 +279,6 @@ pub mod pallet {
 			} else {
 				(hash, Gender::Female)
 			}
-		}
-
-		pub fn generate_kitty(origin: OriginFor<T>) -> Kitty<T> {
-			// Make sure the caller is from a signed origin
-			let sender = ensure_signed(origin).unwrap();
-
-			// Generate unique DNA and Gender using a helper function
-			let (kitty_gen_dna, gender) = Self::gen_dna();
-
-			// Write new kitty to storage by calling helper function
-			Self::mint(&sender, kitty_gen_dna, gender);
-		
-			let kitty = Kitties::<T>::get(&kitty_gen_dna).ok_or(Error::<T>::NoKitty).unwrap();
-
-			kitty
 		}
 
 		// Picks from existing DNA
