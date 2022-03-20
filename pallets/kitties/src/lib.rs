@@ -10,6 +10,7 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -21,6 +22,7 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_io::hashing::blake2_128;
 	use sp_runtime::ArithmeticError;
+	use crate::weights::WeightInfo;
 
 	#[cfg(feature = "std")]
 	use frame_support::serde::{Deserialize, Serialize};
@@ -77,6 +79,8 @@ pub mod pallet {
 
 		/// The type of Randomness we want to specify for this pallet.
 		type KittyRandomness: Randomness<Self::Hash, Self::BlockNumber>;
+	
+		type WeightInfo: WeightInfo;
 	}
 
 	// Errors
@@ -140,7 +144,7 @@ pub mod pallet {
 		/// Create a new unique kitty.
 		///
 		/// The actual kitty creation is done in the `mint()` function.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::create_kitty())]
 		pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
 			// Make sure the caller is from a signed origin
 			let sender = ensure_signed(origin)?;
@@ -188,7 +192,7 @@ pub mod pallet {
 		///
 		/// Any account that holds a kitty can send it to another Account. This will reset the
 		/// asking price of the kitty, marking it not for sale.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			to: T::AccountId,
@@ -225,7 +229,7 @@ pub mod pallet {
 		/// Set the price for a kitty.
 		///
 		/// Updates kitty price and updates storage.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_price())]
 		pub fn set_price(
 			origin: OriginFor<T>,
 			kitty_id: [u8; 16],
