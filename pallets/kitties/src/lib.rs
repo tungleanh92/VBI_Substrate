@@ -212,7 +212,7 @@ pub mod pallet {
 		/// This will reset the asking price of the kitty, marking it not for sale.
 		/// Marking this method `transactional` so when an error is returned, we ensure no storage
 		/// is changed.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::buy_kitty())]
 		pub fn buy_kitty(
 			origin: OriginFor<T>,
 			kitty_id: [u8; 16],

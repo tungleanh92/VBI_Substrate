@@ -6,6 +6,7 @@ use super::*;
 use crate::Pallet as Kitties;
 use frame_benchmarking::{benchmarks, whitelisted_caller, account};
 use frame_system::RawOrigin;
+use frame_support::traits::Currency;
 
 benchmarks! {
 	create_kitty {
@@ -28,14 +29,16 @@ benchmarks! {
 		let kitty_hashes = Kitties::<T>::kitties_owned(caller.clone());
 	} : _(RawOrigin::Signed(caller), to, kitty_hashes[0])
 
-	// buy_kitty{
-	// 	let s in 0 .. 10000000;
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	let owner: T::AccountId = account("owner", 2u32, 2u32);
-	// 	Kitties::<T>::mint(&owner, [1u8; 16], Gender::Female);
-	// 	let kitty_hashes = Kitties::<T>::kitties_owned(owner.clone());
-	// 	let _ = Kitties::<T>::set_price(RawOrigin::Signed(owner), kitty_hashes[0], Some(s.into()));
-	// }: _(RawOrigin::Signed(caller), kitty_hashes[0], Some(s.into()))
+	buy_kitty{
+		let s in 0 .. 10000000;
+		let caller: T::AccountId = whitelisted_caller();
+		let owner: T::AccountId = account("owner", 2u32, 2u32);
+		Kitties::<T>::mint(&owner, [1u8; 16], Gender::Female);
+		let kitty_hashes = Kitties::<T>::kitties_owned(owner.clone());
+		let _ = Kitties::<T>::set_price(RawOrigin::Signed(owner).into(), kitty_hashes[0], Some(s.into()));
+		let balance = T::Currency::minimum_balance() * s.into();
+        let _ = T::Currency::make_free_balance_be(&caller, balance);
+	}: _(RawOrigin::Signed(caller), kitty_hashes[0], Some(s.into()))
 
 	breed_kitty{
 		let s in 0 .. 10000000;

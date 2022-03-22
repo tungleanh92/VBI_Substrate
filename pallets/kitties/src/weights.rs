@@ -38,6 +38,7 @@ pub trait WeightInfo {
 	fn set_price() -> Weight;
 	fn transfer() -> Weight;
 	fn breed_kitty() -> Weight;
+	fn buy_kitty() -> Weight;
 }
 
 /// Weight functions for `pallet_kitties`.
@@ -67,6 +68,14 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+    // Storage: Kitties Kitties (r:1 w:1)
+	// Storage: Kitties KittiesOwned (r:2 w:2)
+	// Storage: System Account (r:1 w:1)
+	fn buy_kitty() -> Weight {
+		(71_630_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
 	// Storage: Kitties Kitties (r:3 w:1)
 	// Storage: RandomnessCollectiveFlip RandomMaterial (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
@@ -95,5 +104,9 @@ impl WeightInfo for () {
 
 	fn breed_kitty() -> Weight {
 		(65_631_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+
+	fn buy_kitty() -> Weight {
+		(71_630_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }
