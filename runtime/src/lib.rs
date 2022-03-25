@@ -497,6 +497,20 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl pallet_kitties_rpc_runtime_api::KittiesRuntimeApi<Block> for Runtime {
+		// fn gen_kitty() -> [u8; 16] {
+		// 	Kitties::gen_kitty() 
+		// }
+
+		// fn get_kitty_info(kitty_id: [u8; 16]) -> Kitty<Config> {
+		// 	Kitties::get_kitty_info(kitty_id: [u8; 16]) 
+		// }
+
+		fn get_kitty_quantity() -> u64 {
+			Kitties::get_kitty_quantity() 
+		}
+	}
+
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (

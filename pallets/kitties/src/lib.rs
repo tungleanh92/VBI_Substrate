@@ -333,6 +333,37 @@ pub mod pallet {
 			Ok(dna)
 		}
 
+		pub fn mint_with_price(
+			owner: &T::AccountId,
+			dna: [u8; 16],
+			price: Option<BalanceOf<T>>,
+			gender: Gender,
+		) -> Result<[u8; 16], DispatchError> {
+			// Create a new object
+			let kitty = Kitty::<T> { dna, price, gender, owner: owner.clone(), date_created: pallet_timestamp::Pallet::<T>::now() };
+			
+			// Check if the kitty does not already exist in our storage map
+			ensure!(!Kitties::<T>::contains_key(&kitty.dna), Error::<T>::DuplicateKitty);
+
+			// Performs this operation first as it may fail
+			let count = CountForKitties::<T>::get();
+			let new_count = count.checked_add(1).ok_or(ArithmeticError::Overflow)?;
+
+			// Append kitty to KittiesOwned
+			KittiesOwned::<T>::try_append(&owner, kitty.dna)
+				.map_err(|_| Error::<T>::TooManyOwned)?;
+
+			// Write new kitty to storage
+			Kitties::<T>::insert(kitty.dna, kitty);
+			CountForKitties::<T>::put(new_count);
+
+			// Deposit our "Created" event.
+			Self::deposit_event(Event::Created { kitty: dna, owner: owner.clone() });
+
+			// Returns the DNA of the new kitty if this succeeds
+			Ok(dna)
+		}
+
 		// Update storage to transfer kitty
 		pub fn do_transfer(
 			kitty_id: [u8; 16],
@@ -389,15 +420,28 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// pub fn gen_kitty() -> Kitty<T> {
-		// 	Kitty {
-		// 		dna: [0; 16],
-		// 		price: None,
-		// 		gender: Gender::Male,
-		// 		owner: ,
-		// 		date_created: pallet_timestamp::Pallet::<T>::now(),
-		// 	}
+
+		// RPC exercise
+		// pub fn gen_kitty() -> [u8; 16] {
+		// 	// Generate unique DNA and Gender using a helper function
+		// 	let (kitty_gen_dna, gender) = Self::gen_dna();
+
+		// 	Self::mint(_, kitty_gen_dna, gender);
+
+		// 	kitty_gen_dna
 		// }
+
+		// pub fn get_kitty_info(kitty_id: [u8; 16]) -> Kitty<T> {
+		// 	let kitty = Kitties::<T>::get(&kitty_id).ok_or(Error::<T>::NoKitty).unwrap();
+
+		// 	kitty
+		// }
+
+		pub fn get_kitty_quantity() -> u64 {
+			let count = CountForKitties::<T>::get();
+
+			count
+		}
 	}
 }
 
