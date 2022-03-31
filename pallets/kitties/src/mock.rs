@@ -89,6 +89,8 @@ impl pallet_kitties::Config for Test {
 	type KittyRandomness = RandomnessCollectiveFlip;
 	type MaxKittiesOwned = MaxKittyOwned;
 	type WeightInfo = ();
+	type Timestamp = Timestamp;
+	type Moment = u64;
 }
 
 // Build genesis storage according to the mock runtime.

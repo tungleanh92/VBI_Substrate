@@ -24,3 +24,5 @@ sp-core = { version = "5.0.0", git = "https://github.com/paritytech/substrate.gi
 sp-rpc = { version = "5.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.17" }
 sp-runtime = { version = "5.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.17" }
 pallet-kitties-rpc-runtime-api = { version = "4.0.0-dev", path = "./runtime-api" }
+pallet-kitties = { version = "4.0.0-dev", path = "../../kitties"}
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = "polkadot-v0.9.17", version = '4.0.0-dev' }

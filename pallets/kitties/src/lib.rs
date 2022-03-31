@@ -15,17 +15,20 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
+		sp_runtime::traits::{Scale},
 		pallet_prelude::*,
-		traits::{tokens::ExistenceRequirement, Currency, Randomness},
+		transactional,
+		traits::{tokens::ExistenceRequirement, Currency, Randomness, Time}
 	};
 	use frame_system::pallet_prelude::*;
-	use scale_info::TypeInfo;
+	use scale_info::{TypeInfo, StaticTypeInfo};
 	use sp_io::hashing::blake2_128;
-	use sp_runtime::ArithmeticError;
+	use sp_runtime::{ArithmeticError, traits::MaybeSerializeDeserialize};
 	use crate::weights::WeightInfo;
+	use sp_std::vec::Vec;
 
 	#[cfg(feature = "std")]
-	use frame_support::serde::{Deserialize, Serialize};
+	use serde::{Deserialize, Serialize};
 
 	// Handles our pallet's currency abstraction
 	type BalanceOf<T> =
@@ -33,22 +36,45 @@ pub mod pallet {
 
 	// Struct for holding kitty information
 	#[derive(Clone, Encode, Decode, PartialEq, TypeInfo)]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+	#[cfg_attr(feature = "std", serde(bound(serialize = "Account: Serialize, Time: Serialize, Balance: std::fmt::Display")))]
+	#[cfg_attr(feature = "std", serde(bound(deserialize = "Account: Deserialize<'de>, Time: Deserialize<'de>, Balance: std::str::FromStr")))]
 	#[scale_info(skip_type_params(T))]
-	pub struct Kitty<T: Config> {
+	pub struct Kitty<Balance, Account, Time> {
 		// Using 16 bytes to represent a kitty DNA
 		pub dna: [u8; 16],
 		// `None` assumes not for sale
-		pub price: Option<BalanceOf<T>>,
+		#[cfg_attr(feature = "std", serde(with = "serde_balance"))]
+		pub price: Balance,
 		pub gender: Gender,
-		pub owner: T::AccountId,
-		pub date_created: T::Moment
+		pub owner: Account,
+		pub date_created: Time
 	}
 
-	impl<T: Config> sp_std::fmt::Display for Kitty<T> {
-		fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
-			write!(f, "({:?}, {:?}, {:?}, {:?}, {:?})", self.dna, self.price, self.gender, self.owner, self.date_created)
+	#[cfg(feature = "std")]
+	mod serde_balance {
+		use serde::{Deserialize, Deserializer, Serializer};
+
+		pub fn serialize<S: Serializer, T: std::fmt::Display>(
+			t: &T,
+			serializer: S,
+		) -> Result<S::Ok, S::Error> {
+			serializer.serialize_str(&t.to_string())
+		}
+
+		pub fn deserialize<'de, D: Deserializer<'de>, T: std::str::FromStr>(
+			deserializer: D,
+		) -> Result<T, D::Error> {
+			let s = String::deserialize(deserializer)?;
+			s.parse::<T>().map_err(|_| serde::de::Error::custom("Parse from string failed"))
 		}
 	}
+
+	// impl<T: Config> sp_std::fmt::Display for Kitty<BalanceOf<T>, T::AccountId, T::Moment> {
+	// 	fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
+	// 		write!(f, "({:?}, {:?}, {:?}, {:?}, {:?})", self.dna, self.price, self.gender, self.owner, self.date_created)
+	// 	}
+	// }
 
 	// Set Gender type in kitty struct
 	#[derive(Clone, Encode, Decode, PartialEq, Copy, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -66,7 +92,7 @@ pub mod pallet {
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_timestamp::Config {
+	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -81,6 +107,17 @@ pub mod pallet {
 		type KittyRandomness: Randomness<Self::Hash, Self::BlockNumber>;
 	
 		type WeightInfo: WeightInfo;
+
+		type Moment: Parameter
+			+ Default
+			+ Scale<Self::BlockNumber, Output = Self::Moment>
+			+ Copy
+			+ MaxEncodedLen
+			+ StaticTypeInfo
+			+ MaybeSerializeDeserialize
+			+ Send;
+
+		type Timestamp: Time<Moment = Self::Moment>;
 	}
 
 	// Errors
@@ -126,7 +163,7 @@ pub mod pallet {
 	/// Maps the kitty struct to the kitty DNA.
 	#[pallet::storage]
 	#[pallet::getter(fn kitties)]
-	pub(super) type Kitties<T: Config> = StorageMap<_, Twox64Concat, [u8; 16], Kitty<T>>;
+	pub(super) type Kitties<T: Config> = StorageMap<_, Twox64Concat, [u8; 16], Kitty<BalanceOf<T>, T::AccountId, T::Moment>>;
 
 	/// Track the kitties owned by each account.
 	#[pallet::storage]
@@ -192,6 +229,7 @@ pub mod pallet {
 		///
 		/// Any account that holds a kitty can send it to another Account. This will reset the
 		/// asking price of the kitty, marking it not for sale.
+		#[transactional]
 		#[pallet::weight(<T as Config>::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
@@ -212,6 +250,7 @@ pub mod pallet {
 		/// This will reset the asking price of the kitty, marking it not for sale.
 		/// Marking this method `transactional` so when an error is returned, we ensure no storage
 		/// is changed.
+		#[transactional]
 		#[pallet::weight(<T as Config>::WeightInfo::buy_kitty())]
 		pub fn buy_kitty(
 			origin: OriginFor<T>,
@@ -243,7 +282,7 @@ pub mod pallet {
 			ensure!(kitty.owner == sender, Error::<T>::NotOwner);
 
 			// Set the price in storage
-			kitty.price = new_price;
+			kitty.price = new_price.unwrap();
 			Kitties::<T>::insert(&kitty_id, kitty);
 
 			// Deposit a "PriceSet" event.
@@ -309,7 +348,13 @@ pub mod pallet {
 			gender: Gender,
 		) -> Result<[u8; 16], DispatchError> {
 			// Create a new object
-			let kitty = Kitty::<T> { dna, price: None, gender, owner: owner.clone(), date_created: pallet_timestamp::Pallet::<T>::now() };
+			let kitty = Kitty::<BalanceOf<T>, T::AccountId, T::Moment> { 
+				dna, 
+				price: None.unwrap(), 
+				gender, 
+				owner: owner.clone(), 
+				date_created: T::Timestamp::now() 
+			};
 			
 			// Check if the kitty does not already exist in our storage map
 			ensure!(!Kitties::<T>::contains_key(&kitty.dna), Error::<T>::DuplicateKitty);
@@ -340,7 +385,7 @@ pub mod pallet {
 			gender: Gender,
 		) -> Result<[u8; 16], DispatchError> {
 			// Create a new object
-			let kitty = Kitty::<T> { dna, price, gender, owner: owner.clone(), date_created: pallet_timestamp::Pallet::<T>::now() };
+			let kitty = Kitty::<BalanceOf<T>, T::AccountId, T::Moment> { dna, price: price.unwrap(), gender, owner: owner.clone(), date_created: T::Timestamp::now() };
 			
 			// Check if the kitty does not already exist in our storage map
 			ensure!(!Kitties::<T>::contains_key(&kitty.dna), Error::<T>::DuplicateKitty);
@@ -390,7 +435,7 @@ pub mod pallet {
 
 			// Mutating state here via a balance transfer, so nothing is allowed to fail after this.
 			if let Some(bid_price) = maybe_bid_price {
-				if let Some(price) = kitty.price {
+				if let price = kitty.price {
 					ensure!(bid_price >= price, Error::<T>::BidPriceTooLow);
 					// Transfer the amount from buyer to seller
 					T::Currency::transfer(&to, &from, price, ExistenceRequirement::KeepAlive)?;
@@ -408,7 +453,7 @@ pub mod pallet {
 
 			// Transfer succeeded, update the kitty owner and reset the price to `None`.
 			kitty.owner = to.clone();
-			kitty.price = None;
+			kitty.price = None.unwrap();
 
 			// Write updates to storage
 			Kitties::<T>::insert(&kitty_id, kitty);
@@ -420,22 +465,23 @@ pub mod pallet {
 			Ok(())
 		}
 
+		pub fn gen_kitty() -> [u8; 16] {
+			let (kitty_gen_dna, gender) = Self::gen_dna();
 
-		// RPC exercise
-		// pub fn gen_kitty() -> [u8; 16] {
-		// 	// Generate unique DNA and Gender using a helper function
-		// 	let (kitty_gen_dna, gender) = Self::gen_dna();
+			let entropy = ("tung", 1u32, 1u32).using_encoded(blake2_128);
+			let account = T::AccountId::decode(&mut &entropy[..]).unwrap();
 
-		// 	Self::mint(_, kitty_gen_dna, gender);
+			let amount: BalanceOf<T> = 0u32.into();
 
-		// 	kitty_gen_dna
-		// }
+			// Write new kitty to storage by calling helper function
+			Self::mint_with_price(&account, kitty_gen_dna, Some(amount), gender);
 
-		// pub fn get_kitty_info(kitty_id: [u8; 16]) -> Kitty<T> {
-		// 	let kitty = Kitties::<T>::get(&kitty_id).ok_or(Error::<T>::NoKitty).unwrap();
+			kitty_gen_dna
+		}
 
-		// 	kitty
-		// }
+		pub fn get_kitty_info() -> Vec<Kitty<BalanceOf<T>, T::AccountId, T::Moment>> {
+			Kitties::<T>::iter_values().collect()
+		}
 
 		pub fn get_kitty_quantity() -> u64 {
 			let count = CountForKitties::<T>::get();

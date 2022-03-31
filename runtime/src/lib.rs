@@ -6,7 +6,6 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use frame_system::weights::SubstrateWeight;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -41,10 +40,12 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
+// use frame_support::traits::Time;
 /// Import the template pallet.
 pub use pallet_template;
 
 pub use pallet_kitties;
+use pallet_kitties_rpc_runtime_api::Kitty;
 
 pub use pallet_loosely_coupling;
 
@@ -69,6 +70,7 @@ pub type Index = u32;
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
 
+pub type Time = u64;
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -287,6 +289,8 @@ impl pallet_kitties::Config for Runtime {
 	type Currency = Balances;
 	type KittyRandomness = RandomnessCollectiveFlip;
 	type MaxKittiesOwned = MaxKittyOwned;
+	type Timestamp = Timestamp;
+	type Moment = u64;
 	type WeightInfo = pallet_kitties::weights::SubstrateWeightInfo<Runtime>;
 }
 
@@ -497,14 +501,14 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_kitties_rpc_runtime_api::KittiesRuntimeApi<Block> for Runtime {
-		// fn gen_kitty() -> [u8; 16] {
-		// 	Kitties::gen_kitty() 
-		// }
+	impl pallet_kitties_rpc_runtime_api::KittiesRuntimeApi<Block, Balance, AccountId, Time> for Runtime {
+		fn gen_kitty() -> [u8; 16] {
+			Kitties::gen_kitty() 
+		}
 
-		// fn get_kitty_info(kitty_id: [u8; 16]) -> Kitty<Config> {
-		// 	Kitties::get_kitty_info(kitty_id: [u8; 16]) 
-		// }
+		fn get_kitty_info() -> Vec<Kitty<Balance, AccountId, Time>> {
+			Kitties::get_kitty_info() 
+		}
 
 		fn get_kitty_quantity() -> u64 {
 			Kitties::get_kitty_quantity() 

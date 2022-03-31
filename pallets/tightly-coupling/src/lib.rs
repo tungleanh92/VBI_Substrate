@@ -64,7 +64,9 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			// Generate unique DNA and Gender using a helper function
+			// let (kitty_gen_dna, gender) = pallet_kitties::Pallet::<T>::gen_dna();
 			let (kitty_gen_dna, gender) = pallet_kitties::Pallet::<T>::gen_dna();
+
 
 			// Write new kitty to storage by calling helper function
 			pallet_kitties::Pallet::<T>::mint(&sender, kitty_gen_dna, gender)?;

@@ -20,25 +20,25 @@
 pub use self::gen_client::Client as TransactionPaymentClient;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
+use pallet_kitties::Kitty;
+use pallet_kitties_rpc_runtime_api::KittiesRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{
-	generic::BlockId,
-	traits::{Block as BlockT},
-};
-use std::sync::Arc;
-
-use pallet_kitties_rpc_runtime_api::KittiesRuntimeApi;
-
+use sp_runtime::{generic::BlockId, traits::Block as BlockT};
+use sp_std::vec::Vec;
+use std::{sync::Arc, thread::AccessError};
 #[rpc]
-pub trait KittyInfoApi<BlockHash> {
-	// #[rpc(name = "genKitty_push")]
-	// fn gen_kitty(&self, at: Option<BlockHash>) -> Result<[u8; 16]>;
+pub trait KittyInfoApi<BlockHash, Balance, Account, Time>
+where
+	Balance: std::fmt::Display + std::str::FromStr,
+{
+	#[rpc(name = "genKitty_push")]
+	fn gen_kitty(&self, at: Option<BlockHash>) -> Result<[u8; 16]>;
 
-    // #[rpc(name = "kittyInfo_get")]
-	// fn get_kitty_info(&self, at: Option<BlockHash>, kitty_id: [u8; 16]) -> Result<Kitty<T>>;
+	#[rpc(name = "kittyInfo_get")]
+	fn get_kitty_info(&self, at: Option<BlockHash>) -> Result<Vec<Kitty<Balance, Account, Time>>>;
 
-    #[rpc(name = "kittyQuantity_get")]
+	#[rpc(name = "kittyQuantity_get")]
 	fn get_kitty_quantity(&self, at: Option<BlockHash>) -> Result<u64>;
 }
 
@@ -72,60 +72,55 @@ impl From<Error> for i64 {
 	}
 }
 
-impl<C, Block> KittyInfoApi<<Block as BlockT>::Hash>
+impl<C, Block, Balance, Account, Time> KittyInfoApi<<Block as BlockT>::Hash, Balance, Account, Time>
 	for KittyInfo<C, Block>
 where
 	Block: BlockT,
 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: KittiesRuntimeApi<Block>,
+	C::Api: KittiesRuntimeApi<Block, Balance, Account, Time>,
+	Balance: std::fmt::Display + std::str::FromStr,
+	pallet_kitties::Kitty<Balance, Account, Time>: sp_api::Decode,
 {
-	// fn gen_kitty(
-	// 	&self,
-	// 	at: Option<<Block as BlockT>::Hash>,
-	// ) -> Result<[u8; 16]> {
-	// 	let api = self.client.runtime_api();
-	// 	let at = BlockId::hash(at.unwrap_or_else(||
-	// 		// If the block hash is not supplied assume the best block.
-	// 		self.client.info().best_hash));
-
-	// 	let result_api = api.gen_kitty(&at);
-
-	// 	result_api.map_err(|e| RpcError {
-	// 		code: ErrorCode::ServerError(Error::RuntimeError.into()),
-	// 		message: "Unable to query dispatch info.".into(),
-	// 		data: Some(e.to_string().into()),
-	// 	})
-	// }
-
-	// fn get_kitty_info(
-	// 	&self,
-	// 	at: Option<<Block as BlockT>::Hash>,
-	// 	kitty_id: [u8; 16]
-	// ) -> Result<Kitty<T>> {
-	// 	let api = self.client.runtime_api();
-	// 	let at = BlockId::hash(at.unwrap_or_else(||
-	// 		// If the block hash is not supplied assume the best block.
-	// 		self.client.info().best_hash));
-
-    //     let result_api = api.get_kitty_info(&at, kitty_id);
-
-	// 	result_api.map_err(|e| RpcError {
-	// 		code: ErrorCode::ServerError(Error::RuntimeError.into()),
-	// 		message: "Unable to query dispatch info.".into(),
-	// 		data: Some(e.to_string().into()),
-	// 	})
-	// }
-
-	fn get_kitty_quantity(
-		&self,
-		at: Option<<Block as BlockT>::Hash>,
-	) -> Result<u64> {
+	fn gen_kitty(&self, at: Option<<Block as BlockT>::Hash>) -> Result<[u8; 16]> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash));
 
-        let result_api = api.get_kitty_quantity(&at);
+		let result_api = api.gen_kitty(&at);
+
+		result_api.map_err(|e| RpcError {
+			code: ErrorCode::ServerError(Error::RuntimeError.into()),
+			message: "Unable to query dispatch info.".into(),
+			data: Some(e.to_string().into()),
+		})
+	}
+
+	fn get_kitty_info(
+		&self,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<Vec<Kitty<Balance, Account, Time>>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
+
+		let result_api = api.get_kitty_info(&at);
+
+		result_api.map_err(|e| RpcError {
+			code: ErrorCode::ServerError(Error::RuntimeError.into()),
+			message: "Unable to query dispatch info.".into(),
+			data: Some(e.to_string().into()),
+		})
+	}
+
+	fn get_kitty_quantity(&self, at: Option<<Block as BlockT>::Hash>) -> Result<u64> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
+
+		let result_api = api.get_kitty_quantity(&at);
 
 		result_api.map_err(|e| RpcError {
 			code: ErrorCode::ServerError(Error::RuntimeError.into()),

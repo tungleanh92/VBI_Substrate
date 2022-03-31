@@ -30,6 +30,7 @@ sp-io = { default-features = false, git = 'https://github.com/paritytech/substra
 sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = "polkadot-v0.9.17", version = '5.0.0' }
 pallet-timestamp = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.17" }
 log = { version = "0.4.11", default-features = false }
+serde_json = { version = "1.0.59" }
 
 [dev-dependencies]
 pallet-balances = { git = 'https://github.com/paritytech/substrate.git', branch = "polkadot-v0.9.17", version = '4.0.0-dev' }
@@ -50,6 +51,7 @@ std = [
 	'sp-core/std',
 	'sp-std/std',
 	'log/std',
+	'serde_json/std'
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

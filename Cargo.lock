@@ -3911,6 +3911,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "scale-info",
  "serde",
+ "serde_json",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -3924,6 +3925,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
+ "pallet-kitties",
  "pallet-kitties-rpc-runtime-api",
  "parity-scale-codec 3.1.2",
  "sp-api",
@@ -3931,14 +3933,17 @@ dependencies = [
  "sp-core",
  "sp-rpc",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-kitties-rpc-runtime-api"
 version = "4.0.0-dev"
 dependencies = [
+ "pallet-kitties",
  "parity-scale-codec 3.1.2",
  "sp-api",
+ "sp-std",
 ]
 
 [[package]]

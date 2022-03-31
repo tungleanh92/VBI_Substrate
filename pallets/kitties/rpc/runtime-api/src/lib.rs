@@ -19,11 +19,16 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-sp_api::decl_runtime_apis! {
-	pub trait KittiesRuntimeApi {
-		// fn gen_kitty() -> [u8; 16];
+pub use pallet_kitties::pallet::{Config, Kitty};
+use sp_std::vec::Vec;
 
-		// fn get_kitty_info() -> Kitty<T>;
+sp_api::decl_runtime_apis! {
+	pub trait KittiesRuntimeApi<Balance, Account, Time> 
+		where 
+			Kitty<Balance, Account, Time>: sp_api::Decode {
+		fn gen_kitty() -> [u8; 16];
+
+		fn get_kitty_info() -> Vec<Kitty<Balance, Account, Time>>;
 
 		fn get_kitty_quantity() -> u64;
 	}
