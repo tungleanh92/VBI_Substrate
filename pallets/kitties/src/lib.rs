@@ -22,7 +22,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::{TypeInfo, StaticTypeInfo};
-	use sp_io::hashing::blake2_128;
+	use sp_io::hashing::{blake2_128, blake2_256};
 	use sp_runtime::{ArithmeticError, traits::MaybeSerializeDeserialize};
 	use crate::weights::WeightInfo;
 	use sp_std::vec::Vec;
@@ -350,42 +350,11 @@ pub mod pallet {
 			// Create a new object
 			let kitty = Kitty::<BalanceOf<T>, T::AccountId, T::Moment> { 
 				dna, 
-				price: None.unwrap(), 
+				price: 0u32.into(), 
 				gender, 
 				owner: owner.clone(), 
 				date_created: T::Timestamp::now() 
 			};
-			
-			// Check if the kitty does not already exist in our storage map
-			ensure!(!Kitties::<T>::contains_key(&kitty.dna), Error::<T>::DuplicateKitty);
-
-			// Performs this operation first as it may fail
-			let count = CountForKitties::<T>::get();
-			let new_count = count.checked_add(1).ok_or(ArithmeticError::Overflow)?;
-
-			// Append kitty to KittiesOwned
-			KittiesOwned::<T>::try_append(&owner, kitty.dna)
-				.map_err(|_| Error::<T>::TooManyOwned)?;
-
-			// Write new kitty to storage
-			Kitties::<T>::insert(kitty.dna, kitty);
-			CountForKitties::<T>::put(new_count);
-
-			// Deposit our "Created" event.
-			Self::deposit_event(Event::Created { kitty: dna, owner: owner.clone() });
-
-			// Returns the DNA of the new kitty if this succeeds
-			Ok(dna)
-		}
-
-		pub fn mint_with_price(
-			owner: &T::AccountId,
-			dna: [u8; 16],
-			price: Option<BalanceOf<T>>,
-			gender: Gender,
-		) -> Result<[u8; 16], DispatchError> {
-			// Create a new object
-			let kitty = Kitty::<BalanceOf<T>, T::AccountId, T::Moment> { dna, price: price.unwrap(), gender, owner: owner.clone(), date_created: T::Timestamp::now() };
 			
 			// Check if the kitty does not already exist in our storage map
 			ensure!(!Kitties::<T>::contains_key(&kitty.dna), Error::<T>::DuplicateKitty);
@@ -468,13 +437,11 @@ pub mod pallet {
 		pub fn gen_kitty() -> [u8; 16] {
 			let (kitty_gen_dna, gender) = Self::gen_dna();
 
-			let entropy = ("tung", 1u32, 1u32).using_encoded(blake2_128);
+			let entropy = ("tung", 1u32, 1u32).using_encoded(blake2_256);
 			let account = T::AccountId::decode(&mut &entropy[..]).unwrap();
 
-			let amount: BalanceOf<T> = 0u32.into();
-
 			// Write new kitty to storage by calling helper function
-			Self::mint_with_price(&account, kitty_gen_dna, Some(amount), gender);
+			Self::mint(&account, kitty_gen_dna, gender);
 
 			kitty_gen_dna
 		}
