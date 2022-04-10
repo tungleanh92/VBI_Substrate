@@ -1,0 +1,10 @@
+{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"author_insertKey",
+    "params": [
+        "aura", 
+        "canvas clown film race tourist music manual speed guilt banana lion right", 
+        "0x6696875491867fa93795b30eb3712ae9603c97c338d25d5fe8d431165042d523"
+    ]
+}

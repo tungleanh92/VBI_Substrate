@@ -1,0 +1,10 @@
+{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"author_insertKey",
+    "params": [
+        "aura", 
+        "recycle spawn purchase else quality priority assault wise oblige ugly man cereal", 
+        "0x6a66d1126db9615abdbc2637b54e9455fde463a68b658f598200937eda4d0060"
+    ]
+}

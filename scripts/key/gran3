@@ -1,0 +1,10 @@
+{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"author_insertKey",
+    "params": [
+        "gran", 
+        "space public love surround fitness work reject action base rare ginger race", 
+        "0x4859c6919279ad4eb38c705e449346eea72c84e1df4467484bc38f97c5ee16f8"
+    ]
+}

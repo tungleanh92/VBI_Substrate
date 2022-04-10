@@ -1,0 +1,10 @@
+{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"author_insertKey",
+    "params": [
+        "aura", 
+        "space public love surround fitness work reject action base rare ginger race", 
+        "0x62161bb94215a21a428b51961a529edea594897b29763348ea5f69c29a795f4c"
+    ]
+}

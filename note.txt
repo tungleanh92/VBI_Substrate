@@ -1,0 +1,99 @@
+Aura 1
+subkey generate
+Secret phrase:       canvas clown film race tourist music manual speed guilt banana lion right
+  Network ID:        substrate
+  Secret seed:       0x84186981ad679bf7d90830b4fc9a852d6f643ce48f962f556e13291a09a9c488
+  Public key (hex):  0x6696875491867fa93795b30eb3712ae9603c97c338d25d5fe8d431165042d523
+  Account ID:        0x6696875491867fa93795b30eb3712ae9603c97c338d25d5fe8d431165042d523
+  Public key (SS58): 5EPDTW7An32phgBLQYPVXZqAHCx2g4ApVkyh2eWs4h3Cmmmj
+  SS58 Address:      5EPDTW7An32phgBLQYPVXZqAHCx2g4ApVkyh2eWs4h3Cmmmj
+
+Grandpa 1
+Secret phrase:       canvas clown film race tourist music manual speed guilt banana lion right
+  Network ID:        substrate
+  Secret seed:       0x84186981ad679bf7d90830b4fc9a852d6f643ce48f962f556e13291a09a9c488
+  Public key (hex):  0xe917586fededcb5494725d82078b232efde7bcd84ee5bb3817dde5892c521bbd
+  Account ID:        0xe917586fededcb5494725d82078b232efde7bcd84ee5bb3817dde5892c521bbd
+  Public key (SS58): 5HLKx1rUkANthWAYegjwBNQPJ68PUPYZHYKPUQzxmwN8wbmJ
+  SS58 Address:      5HLKx1rUkANthWAYegjwBNQPJ68PUPYZHYKPUQzxmwN8wbmJ
+
+Aura 2
+Secret phrase:       recycle spawn purchase else quality priority assault wise oblige ugly man cereal
+  Network ID:        substrate
+  Secret seed:       0x47b5e12851e8506a5baafd977731a58f8cd2534aa8e4431711f70592683ed460
+  Public key (hex):  0x6a66d1126db9615abdbc2637b54e9455fde463a68b658f598200937eda4d0060
+  Account ID:        0x6a66d1126db9615abdbc2637b54e9455fde463a68b658f598200937eda4d0060
+  Public key (SS58): 5EUDUZ6aPMe4uhCk6SKF9rPBPcVPvaTJWVk82HvAkrWn9PiB
+  SS58 Address:      5EUDUZ6aPMe4uhCk6SKF9rPBPcVPvaTJWVk82HvAkrWn9PiB
+
+Grandpa 2
+Secret phrase:       recycle spawn purchase else quality priority assault wise oblige ugly man cereal
+  Network ID:        substrate
+  Secret seed:       0x47b5e12851e8506a5baafd977731a58f8cd2534aa8e4431711f70592683ed460
+  Public key (hex):  0x80aa8f3cc71afa204da7721ef33b49cf727ff51acf4bbad79f30c0e907b74971
+  Account ID:        0x80aa8f3cc71afa204da7721ef33b49cf727ff51acf4bbad79f30c0e907b74971
+  Public key (SS58): 5EyQeqVhHYBeXjjNinSGRiSEtcQJ2J111hLnZuaSsAACbP4A
+  SS58 Address:      5EyQeqVhHYBeXjjNinSGRiSEtcQJ2J111hLnZuaSsAACbP4A
+
+Aura 3
+Secret phrase:       space public love surround fitness work reject action base rare ginger race
+  Network ID:        substrate
+  Secret seed:       0x169f261540e1dee92701495298e12a71d43cd3d3a66b841ae8a16028ea72599a
+  Public key (hex):  0x62161bb94215a21a428b51961a529edea594897b29763348ea5f69c29a795f4c
+  Account ID:        0x62161bb94215a21a428b51961a529edea594897b29763348ea5f69c29a795f4c
+  Public key (SS58): 5EHK7mBE5bQRYBhBboEyNUWj57Ygkk3w6rZs8daA3f4s4rXB
+  SS58 Address:      5EHK7mBE5bQRYBhBboEyNUWj57Ygkk3w6rZs8daA3f4s4rXB
+
+Grandpa 3
+Secret phrase:       space public love surround fitness work reject action base rare ginger race
+  Network ID:        substrate
+  Secret seed:       0x169f261540e1dee92701495298e12a71d43cd3d3a66b841ae8a16028ea72599a
+  Public key (hex):  0x4859c6919279ad4eb38c705e449346eea72c84e1df4467484bc38f97c5ee16f8
+  Account ID:        0x4859c6919279ad4eb38c705e449346eea72c84e1df4467484bc38f97c5ee16f8
+  Public key (SS58): 5DhZyS7nQTWh33qdeawMQs3Ji3Mt8gBYLg3dZiuHppTc3fs3
+  SS58 Address:      5DhZyS7nQTWh33qdeawMQs3Ji3Mt8gBYLg3dZiuHppTc3fs3
+
+Sudo
+Secret phrase:       rule arctic home rocket oak kitten ahead thumb awful sausage banner inherit
+  Network ID:        substrate
+  Secret seed:       0xe906d6a8c66fd0cb672c2f48d5569ad0d497fc8e9f450bfb2dedd2c6340a6c4c
+  Public key (hex):  0x5cdc3f6b3f4c2d70a5cc83bdb1840da5d60aeb1191c874eed7423259c8b5676a
+  Account ID:        0x5cdc3f6b3f4c2d70a5cc83bdb1840da5d60aeb1191c874eed7423259c8b5676a
+  Public key (SS58): 5EATgxj1cmuUdPoLyFJWJAqXHQPWxPQfZoCwXqJtp3w5EUiY
+  SS58 Address:      5EATgxj1cmuUdPoLyFJWJAqXHQPWxPQfZoCwXqJtp3w5EUiY
+
+./target/release/node-template \
+--base-path ./data/node01 \
+--chain ./customSpecRaw.json \
+--port 30333 \
+--ws-port 9945 \
+--rpc-port 9933 \
+--telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
+--validator \
+--rpc-methods Unsafe \
+--name MyNode01 \
+--node-key 0x98cb2756931d45e88e9f4bc2c371923053fb0bd72b05d65bd029b3bbbfb50977
+
+./target/release/node-template \
+--base-path ./data/node02 \
+--chain ./customSpecRaw.json \
+--port 30334 \
+--ws-port 9946 \
+--rpc-port 9934 \
+--telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
+--validator \
+--rpc-methods Unsafe \
+--name MyNode02 \
+--bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWAWxy18W6mJ9YFcaLsxqP8Hsh3WuQc1fx7YNnWUrnPFAT \
+
+./target/release/node-template \
+--base-path ./data/node03 \
+--chain ./customSpecRaw.json \
+--port 30335 \
+--ws-port 9947 \
+--rpc-port 9935 \
+--telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
+--validator \
+--rpc-methods Unsafe \
+--name MyNode03 \
+--bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWAWxy18W6mJ9YFcaLsxqP8Hsh3WuQc1fx7YNnWUrnPFAT \
